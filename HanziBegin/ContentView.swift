@@ -21,8 +21,9 @@ struct ContentView: View {
         VStack {
             CanvasRepresentable(clear: $clearCanvas, image: $canvasImage)
                 .edgesIgnoringSafeArea(.all)
-                .background(Color.black)
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .background(Color.white)
+                .frame(width: 300, height: 300)
+                .border(Color.black, width: 1)
             
             HStack {
                 Button(action: {
@@ -37,11 +38,14 @@ struct ContentView: View {
                 }
 
                 Button(action: {
-                    if let image = canvasImage {
-                        print("Captured Image Size: \(image.size)")
+                    if let canvasView = getCanvasView() {
+                        let image = canvasView.asImage()
+                        canvasImage = image
+                        saveImageToGallery(image: image) // Save the input image for debugging
                         predictionResult = recognizeHandwriting(from: image)
+                        print("Prediction : \(predictionResult)")
                     } else {
-                        predictionResult = "No image to recognize"
+                        print("Prediction not found")
                     }
                 }) {
                     Text("Recognize")
@@ -52,7 +56,11 @@ struct ContentView: View {
                 }
 
                 Button(action: {
-                    saveCanvas()
+                    if let canvasView = getCanvasView() {
+                        canvasView.saveCanvasToGallery()
+                    } else {
+                        print("CanvasView not found")
+                    }
                 }) {
                     Text("Save")
                         .foregroundColor(.white)
@@ -71,18 +79,22 @@ struct ContentView: View {
         }
     }
 
-    func saveCanvas() {
+    private func saveImageToGallery(image: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    }
+
+    private func getCanvasView() -> CanvasView? {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else {
             print("No window found")
-            return
+            return nil
         }
 
-        if let rootView = window.rootViewController?.view,
-           let canvasView = findCanvasView(in: rootView) {
-            canvasView.saveCanvasToGallery()
+        if let rootView = window.rootViewController?.view {
+            return findCanvasView(in: rootView)
         } else {
-            print("CanvasView not found")
+            print("Root view not found")
+            return nil
         }
     }
 

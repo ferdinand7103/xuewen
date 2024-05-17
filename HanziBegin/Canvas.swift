@@ -43,7 +43,7 @@ class CanvasView: UIView {
         self.isMultipleTouchEnabled = false
         
         if lineColor == nil {
-            lineColor = UIColor.white
+            lineColor = UIColor.black
         }
         if lineWidth == nil {
             lineWidth = 10
@@ -51,6 +51,8 @@ class CanvasView: UIView {
         if path == nil {
             path = UIBezierPath()
         }
+        
+        self.backgroundColor = UIColor.white
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -88,10 +90,8 @@ class CanvasView: UIView {
     func asImage() -> UIImage {
         let renderer = UIGraphicsImageRenderer(bounds: bounds)
         return renderer.image { rendererContext in
-            // Draw background color
-            UIColor.black.setFill()
+            self.backgroundColor?.setFill()
             rendererContext.fill(bounds)
-            // Render the view hierarchy in the current context
             self.layer.render(in: rendererContext.cgContext)
         }
     }
@@ -110,37 +110,38 @@ class CanvasView: UIView {
     }
 }
 
-extension UIImage {
-    func pixelBuffer() -> CVPixelBuffer? {
-        let width = Int(self.size.width)
-        let height = Int(self.size.height)
-        
-        var pixelBuffer: CVPixelBuffer?
-        let pixelBufferAttributes: [String: Any] = [
-            kCVPixelBufferCGImageCompatibilityKey as String: kCFBooleanTrue!,
-            kCVPixelBufferCGBitmapContextCompatibilityKey as String: kCFBooleanTrue!
-        ]
-        
-        let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32ARGB, pixelBufferAttributes as CFDictionary, &pixelBuffer)
-        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
-            return nil
-        }
-        
-        CVPixelBufferLockBaseAddress(buffer, .readOnly)
-        let pixelData = CVPixelBufferGetBaseAddress(buffer)
-        
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let context = CGContext(data: pixelData, width: width, height: height, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: colorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
-        
-        context?.translateBy(x: 0, y: CGFloat(height))
-        context?.scaleBy(x: 1.0, y: -1.0)
-        
-        UIGraphicsPushContext(context!)
-        self.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
-        UIGraphicsPopContext()
-        
-        CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
-        
-        return buffer
-    }
-}
+
+//extension UIImage {
+//    func pixelBuffer() -> CVPixelBuffer? {
+//        let width = Int(self.size.width)
+//        let height = Int(self.size.height)
+//        
+//        var pixelBuffer: CVPixelBuffer?
+//        let pixelBufferAttributes: [String: Any] = [
+//            kCVPixelBufferCGImageCompatibilityKey as String: kCFBooleanTrue!,
+//            kCVPixelBufferCGBitmapContextCompatibilityKey as String: kCFBooleanTrue!
+//        ]
+//        
+//        let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32ARGB, pixelBufferAttributes as CFDictionary, &pixelBuffer)
+//        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+//            return nil
+//        }
+//        
+//        CVPixelBufferLockBaseAddress(buffer, .readOnly)
+//        let pixelData = CVPixelBufferGetBaseAddress(buffer)
+//        
+//        let colorSpace = CGColorSpaceCreateDeviceRGB()
+//        let context = CGContext(data: pixelData, width: width, height: height, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: colorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
+//        
+//        context?.translateBy(x: 0, y: CGFloat(height))
+//        context?.scaleBy(x: 1.0, y: -1.0)
+//        
+//        UIGraphicsPushContext(context!)
+//        self.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
+//        UIGraphicsPopContext()
+//        
+//        CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
+//        
+//        return buffer
+//    }
+//}
