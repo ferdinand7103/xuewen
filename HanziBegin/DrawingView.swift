@@ -5,81 +5,120 @@
 //  Created by Ferdinand Jacques on 15/05/24.
 //
 
-import SwiftUI
-
-struct DrawingView: UIViewRepresentable {
-    @Binding var lines: [Line]
-
-    class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        var parent: DrawingView
-
-        init(parent: DrawingView) {
-            self.parent = parent
-        }
-
-        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            let point = gesture.location(in: gesture.view)
-            switch gesture.state {
-            case .began:
-                parent.lines.append(Line(points: [point]))
-            case .changed:
-                parent.lines[parent.lines.count - 1].points.append(point)
-            case .ended:
-                break
-            default:
-                break
-            }
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self)
-    }
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
-        panGesture.maximumNumberOfTouches = 1
-        panGesture.delegate = context.coordinator
-        view.addGestureRecognizer(panGesture)
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {
-        if let sublayers = uiView.layer.sublayers {
-            for layer in sublayers {
-                layer.removeFromSuperlayer()
-            }
-        }
-        for line in lines {
-            let path = UIBezierPath()
-            path.move(to: line.points.first!)
-            for point in line.points.dropFirst() {
-                path.addLine(to: point)
-            }
-            let shapeLayer = CAShapeLayer()
-            shapeLayer.path = path.cgPath
-            shapeLayer.strokeColor = UIColor.black.cgColor
-            shapeLayer.lineWidth = 10
-            shapeLayer.fillColor = UIColor.clear.cgColor
-            uiView.layer.addSublayer(shapeLayer)
-        }
-    }
-
-    func captureImage() -> UIImage {
-        let renderer = UIGraphicsImageRenderer(bounds: CGRect(x: 0, y: 0, width: 300, height: 300))
-        return renderer.image { rendererContext in
-            let uiView = UIView(frame: CGRect(x: 0, y: 0, width: 300, height: 300))
-            let coordinator = Coordinator(parent: self)
-            let panGesture = UIPanGestureRecognizer(target: coordinator, action: #selector(Coordinator.handlePan(_:)))
-            panGesture.maximumNumberOfTouches = 1
-            panGesture.delegate = coordinator
-            uiView.addGestureRecognizer(panGesture)
-            uiView.layer.render(in: rendererContext.cgContext)
-        }
-    }
-}
-
-struct Line {
-    var points: [CGPoint]
-}
+//import SwiftUI
+//
+//struct DrawingView: UIViewRepresentable {
+//    @Binding var lines: [Line]
+//    @Binding var drawingUIView: UIView?
+//    
+//    func makeCoordinator() -> Coordinator {
+//        return Coordinator(self)
+//    }
+//
+//    class Coordinator: NSObject {
+//        var parent: DrawingView
+//        var uiView: UIView?
+//
+//        init(_ parent: DrawingView) {
+//            self.parent = parent
+//        }
+//    }
+//
+//    func makeUIView(context: Context) -> UIView {
+//        let view = UIView()
+//        view.backgroundColor = .clear
+////        view.isUserInteractionEnabled = true
+//        return view
+//    }
+//
+//    func updateUIView(_ uiView: UIView, context: Context) {
+//        context.coordinator.uiView = uiView // Set the UIView reference here
+//        // Remove existing drawing layers
+//        uiView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+//
+//        // Render the lines onto the view
+//        for line in lines {
+//            let path = UIBezierPath()
+//            path.move(to: line.points.first!)
+//            for point in line.points.dropFirst() {
+//                path.addLine(to: point)
+//            }
+//
+//            let shapeLayer = CAShapeLayer()
+//            shapeLayer.path = path.cgPath
+//            shapeLayer.strokeColor = UIColor.black.cgColor
+//            shapeLayer.lineWidth = 10
+//            shapeLayer.fillColor = UIColor.clear.cgColor
+//
+//            uiView.layer.addSublayer(shapeLayer)
+//        }
+//    }
+//
+//    func captureImage(from uiView: UIView) -> UIImage {
+//        let renderer = UIGraphicsImageRenderer(bounds: uiView.bounds)
+//        return renderer.image { rendererContext in
+//            uiView.layer.render(in: rendererContext.cgContext)
+//        }
+//    }
+//}
+//
+//struct Line {
+//    var points: [CGPoint]
+//}
+//
+//extension UIView {
+//    func asImage() -> UIImage {
+//        let renderer = UIGraphicsImageRenderer(bounds: bounds)
+//        return renderer.image { rendererContext in
+//            layer.render(in: rendererContext.cgContext)
+//        }
+//    }
+//}
+//
+//extension UIImage {
+//    func pixelBuffer() -> CVPixelBuffer? {
+//        let width = Int(self.size.width)
+//        let height = Int(self.size.height)
+//        let attributes = [
+//            kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue!,
+//            kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue!
+//        ] as CFDictionary
+//        var pixelBuffer: CVPixelBuffer?
+//        let status = CVPixelBufferCreate(
+//            kCFAllocatorDefault,
+//            width,
+//            height,
+//            kCVPixelFormatType_32ARGB,
+//            attributes,
+//            &pixelBuffer
+//        )
+//        
+//        guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+//            return nil
+//        }
+//        
+//        CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0))
+//        let pixelData = CVPixelBufferGetBaseAddress(buffer)
+//        let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+//        let context = CGContext(
+//            data: pixelData,
+//            width: width,
+//            height: height,
+//            bitsPerComponent: 8,
+//            bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
+//            space: rgbColorSpace,
+//            bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue
+//        )
+//        
+//        context?.translateBy(x: 0, y: CGFloat(height))
+//        context?.scaleBy(x: 1.0, y: -1.0)
+//        
+//        UIGraphicsPushContext(context!)
+//        self.draw(in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
+//        UIGraphicsPopContext()
+//        CVPixelBufferUnlockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0))
+//        
+//        return buffer
+//    }
+//}
+//
