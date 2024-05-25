@@ -8,42 +8,48 @@
 import SwiftUI
 
 struct Display: View {
-    var num: Int
-    @State var HanziPinyin : [String: String] = ["一": "yī", "们": "mén", "不": "bù", "他": "tā", "分": "fēn",]
+    @Binding var num: Int
+    @State var HanziPinyin: [String: [String]] = ["一": ["yī", "One", "6055946"], "几": ["jǐ", "Several", "cameo-apples-1"], "八": ["bā", "Eight", "8913811"], "十": ["shí", "Ten", "st,small,507x507-pad,600x600,f8f8f8.u2"], "了": ["le", "Finish", "pngtree-3d-green-check-mark-icon-png-image_6552255"]]
     @State private var clearCanvas = false
     @State private var canvasImage: UIImage?
     @State private var predictionResult: String = ""
-    
+
     var body: some View {
-        var key : [String] = getKeys()
-        var value : [String] = getValues()
+        let keys = HanziPinyin.keys.sorted()
+        let values = keys.map { HanziPinyin[$0]! }
         HStack(spacing: 0) {
             VStack(spacing: 0) {
-                VStack {
-                    Text(key[num])
+                VStack(alignment: .center) {
+                    Text(keys[num])
                         .font(.system(size: 100))
-                    .bold()
-                    Text(value[num])
+                        .bold()
+                    Text(values[num][0])
+                        .font(.system(size: 100))
+                        .bold()
+                    Text(values[num][1])
                         .font(.system(size: 100))
                         .bold()
                 }
                 .frame(width: 405, height: 425)
-                .padding()
+                .padding([.leading, .bottom], 30)
                 .border(Color.black, width: 5)
-                Image("6055946")
+                Image(values[num][2])
                     .resizable()
                     .scaledToFit()
                     .frame(width: 435, height: 425)
                     .border(Color.black, width: 5)
             }
+            .padding(.leading, 100)
             ZStack {
                 CanvasRepresentable(clear: $clearCanvas, image: $canvasImage)
                     .edgesIgnoringSafeArea(.all)
                     .background(Color.white)
-                    .frame(width: 760, height: 850)
-                    .border(Color.black, width: 1)
+                    .frame(width: 850, height: 850)
                 Button(action: {
                     clearCanvas = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        clearCanvas = false
+                    }
                     predictionResult = ""
                 }) {
                     Text(Image(systemName: "eraser"))
@@ -53,16 +59,21 @@ struct Display: View {
                         .background(Color.blue)
                         .cornerRadius(50)
                 }
-                .padding(.bottom, 650)
-                .padding(.trailing, 600)
+                .padding(.bottom, 700)
+                .padding(.trailing, 700)
                 Button(action: {
                     if let canvasView = getCanvasView() {
                         let image = canvasView.asImage()
                         canvasImage = image
-                        saveImageToGallery(image: image)
                         predictionResult = recognizeHandwriting(from: image)
                         print("Prediction : \(predictionResult)")
+                        if predictionResult == keys[num] {
+                            num = (num + 1) % keys.count
+                        }
                         clearCanvas = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            clearCanvas = false
+                        }
                     } else {
                         print("Prediction not found")
                     }
@@ -74,39 +85,19 @@ struct Display: View {
                         .background(Color.blue)
                         .cornerRadius(50)
                 }
-                .padding(.bottom, 650)
-                .padding(.leading, 600)
+                .padding(.bottom, 700)
+                .padding(.leading, 450)
             }
         }
     }
-    
-    func getKeys() -> Array<String> {
-        var keys : [String] = []
-        for hanzi in HanziPinyin.keys {
-            keys.append(hanzi)
-        }
-        return keys
-    }
-    
-    func getValues() -> Array<String> {
-        var values : [String] = []
-        for pinyin in HanziPinyin.values {
-            values.append(pinyin)
-        }
-        return values
-    }
-    
-    private func saveImageToGallery(image: UIImage) {
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-    }
-    
+
     private func getCanvasView() -> CanvasView? {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else {
             print("No window found")
             return nil
         }
-
+        
         if let rootView = window.rootViewController?.view {
             return findCanvasView(in: rootView)
         } else {
@@ -114,7 +105,7 @@ struct Display: View {
             return nil
         }
     }
-
+    
     private func findCanvasView(in view: UIView) -> CanvasView? {
         if let canvasView = view as? CanvasView {
             return canvasView
@@ -128,6 +119,6 @@ struct Display: View {
     }
 }
 
-#Preview {
-    Display(num: 0)
-}
+//#Preview {
+//    Display(num: 0)
+//}

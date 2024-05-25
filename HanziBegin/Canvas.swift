@@ -95,17 +95,5 @@ class CanvasView: UIView {
             self.layer.render(in: rendererContext.cgContext)
         }
     }
-
-    func saveCanvasToGallery() {
-        let image = asImage()
-        UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
-    }
-    
-    @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        if let error = error {
-            print("Error saving image: \(error.localizedDescription)")
-        } else {
-            print("Canvas saved to gallery successfully")
-        }
-    }
 }
+

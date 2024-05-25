@@ -11,7 +11,7 @@ struct ContentView: View {
     @State var num = 0
 
     var body: some View {
-        Display(num: num)
+        Display(num: $num)
     }
 }
 

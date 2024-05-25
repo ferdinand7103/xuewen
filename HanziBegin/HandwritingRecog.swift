@@ -1,10 +1,3 @@
-//
-//  asdas.swift
-//  HanziBegin
-//
-//  Created by Ferdinand Jacques on 15/05/24.
-//
-
 import CoreML
 import UIKit
 
@@ -14,9 +7,13 @@ func recognizeHandwriting(from image: UIImage) -> String {
         return "Recognition failed: Model initialization failed"
     }
 
+    print("Resizing image...")
+    guard let resizedImage = image.resize(to: CGSize(width: 28, height: 28)) else {
+        return "Recognition failed: Unable to resize image"
+    }
+
     print("Converting image to pixel buffer...")
-    guard let resizedImage = image.resize(to: CGSize(width: 28, height: 28)),
-          let buffer = resizedImage.pixelBuffer() else {
+    guard let buffer = resizedImage.pixelBuffer() else {
         return "Recognition failed: Unable to convert image to pixel buffer"
     }
 
@@ -36,7 +33,7 @@ func recognizeHandwriting(from image: UIImage) -> String {
 
 extension UIImage {
     func resize(to size: CGSize) -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(size, false, self.scale)
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
         defer { UIGraphicsEndImageContext() }
         self.draw(in: CGRect(origin: .zero, size: size))
         return UIGraphicsGetImageFromCurrentImageContext()
@@ -54,20 +51,24 @@ extension UIImage {
         }
 
         CVPixelBufferLockBaseAddress(buffer, .readOnly)
-        let data = CVPixelBufferGetBaseAddress(buffer)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let context = CGContext(data: data, width: width, height: height, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: colorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
-        guard let cgContext = context else {
+        guard let context = CGContext(data: CVPixelBufferGetBaseAddress(buffer),
+                                      width: width,
+                                      height: height,
+                                      bitsPerComponent: 8,
+                                      bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue) else {
             return nil
         }
 
-        cgContext.translateBy(x: 0, y: CGFloat(height))
-        cgContext.scaleBy(x: 1.0, y: -1.0)
-        UIGraphicsPushContext(cgContext)
+        UIGraphicsPushContext(context)
+        defer { UIGraphicsPopContext() }
+        context.translateBy(x: 0, y: CGFloat(height))
+        context.scaleBy(x: 1.0, y: -1.0)
         self.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
-        UIGraphicsPopContext()
         CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
 
         return buffer
     }
 }
+
