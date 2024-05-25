@@ -10,12 +10,11 @@ import UIKit
 
 func recognizeHandwriting(from image: UIImage) -> String {
     print("Loading model...")
-    guard let model = try? HanziRecog1(configuration: .init()) else {
+    guard let model = try? HanziRecog3(configuration: .init()) else {
         return "Recognition failed: Model initialization failed"
     }
 
     print("Converting image to pixel buffer...")
-    // Resize the image to the size expected by the model (e.g., 28x28 if using MNIST-like data)
     guard let resizedImage = image.resize(to: CGSize(width: 28, height: 28)),
           let buffer = resizedImage.pixelBuffer() else {
         return "Recognition failed: Unable to convert image to pixel buffer"
@@ -26,9 +25,8 @@ func recognizeHandwriting(from image: UIImage) -> String {
         return "Recognition failed: Prediction failed"
     }
 
-    // Extract the recognized text from the prediction's featureValue dictionary
     if let textFeatureValue = prediction.featureValue(for: "target")?.stringValue {
-        print("Prediction successful: \(textFeatureValue)")
+        print("Prediction successful: \(prediction.targetProbability)")
         return textFeatureValue
     } else {
         print("No text found in prediction.")
