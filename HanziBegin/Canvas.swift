@@ -7,7 +7,6 @@
 
 import SwiftUI
 import UIKit
-import CoreVideo
 
 struct CanvasRepresentable: UIViewRepresentable {
     @Binding var clear: Bool
